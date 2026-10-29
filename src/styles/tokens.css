@@ -1,0 +1,221 @@
+/* ─── Nova Studio Design Tokens ─────────────────────────────────────────── */
+
+@import "tailwindcss";
+
+:root {
+  /* Surfaces */
+  --n-bg:     #080808;
+  --n-card:   #0C0C0C;
+  --n-raise:  #111111;
+  --n-hover:  #171717;
+  --n-active: #1D1D1D;
+
+  /* Lines */
+  --n-line:   #1C1C1C;
+  --n-line2:  #272727;
+
+  /* Text */
+  --n-hi:     #F4F4F4;
+  --n-mid:    #A1A1A1;
+  --n-low:    #737373;
+  --n-faint:  #4E4E4E;
+
+  /* Primary action */
+  --n-paper:    #EDEDED;
+  --n-on-paper: #090909;
+
+  /* Semantic */
+  --n-add:  #8FB79E;
+  --n-del:  #BE8B8B;
+  --n-warn: #C2A874;
+
+  /* Fonts */
+  --font-ui:   'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Layout */
+  --dock-w:   48px;
+  --topbar-h: 52px;
+  --status-h: 30px;
+  --gap:      8px;
+  --page-px:  10px;
+}
+
+[data-theme="light"] {
+  --n-bg:     #F1F1F1;
+  --n-card:   #FFFFFF;
+  --n-raise:  #F6F6F6;
+  --n-hover:  #EFEFEF;
+  --n-active: #E6E6E6;
+  --n-line:   #E4E4E4;
+  --n-line2:  #D0D0D0;
+  --n-hi:     #171717;
+  --n-mid:    #4F4F4F;
+  --n-low:    #6E6E6E;
+  --n-faint:  #9A9A9A;
+  --n-paper:    #1A1A1A;
+  --n-on-paper: #FAFAFA;
+  --n-add:  #2F7A4F;
+  --n-del:  #A84545;
+  --n-warn: #8A6A1F;
+}
+
+/* ─── Reset ──────────────────────────────────────────────────────────────── */
+
+*, ::before, ::after { box-sizing: border-box; }
+
+html, body, #root {
+  margin: 0; padding: 0;
+  width: 100%; height: 100%;
+  overflow: hidden;
+  font-family: var(--font-ui);
+  background: var(--n-bg);
+  color: var(--n-hi);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── App Shell ──────────────────────────────────────────────────────────── */
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  background: var(--n-bg);
+  overflow: hidden;
+}
+
+/* Workspace row: dock + left panel + editor + right panel */
+.workspace {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  /* No gap here — spacing handled by padding on panels + handle margins */
+  gap: 0;
+  padding: var(--gap) var(--page-px) var(--gap);
+}
+
+/* ─── Panel sizing — widths are now driven by usePanelResize inline styles ── */
+
+/* Dock */
+.dock {
+  width: var(--dock-w);
+  flex-shrink: 0;
+  margin-right: var(--gap);
+}
+
+/* Editor fills remaining space */
+.editor-area {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ─── Scrollbars ─────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--n-line2); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--n-faint); }
+
+/* ─── Focus ring ─────────────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid var(--n-paper);
+  outline-offset: 2px;
+}
+
+/* ─── Animations — ALL GPU-composited, NO JS timers ─────────────────────── */
+/*
+ * Rules:
+ * 1. Only use `transform` and `opacity` — these run on the compositor thread,
+ *    never touching the CPU layout/paint pipeline.
+ * 2. Add `will-change: transform` only on elements that animate frequently
+ *    (spinners, progress bars). Remove it after animation ends.
+ * 3. No `setTimeout`/`setInterval` in frontend code for visual effects.
+ *    All timing signals come from Rust via Tauri events (useBackendEvents.ts).
+ */
+
+/* Window fade-in: class toggled by Rust `window-ready` event */
+html { opacity: 0; transition: opacity 180ms ease; }
+html.ready { opacity: 1; }
+
+/* Spinner — GPU only (transform: rotate) */
+@keyframes nova-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Pulse — GPU only (opacity) */
+@keyframes nova-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* Shimmer skeleton — GPU only (transform: translateX) */
+@keyframes nova-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Progress bar — GPU only (transform: scaleX) */
+@keyframes nova-progress {
+  0%   { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
+
+/* Branch syncing pulse: toggled by Rust sync-pulse event */
+@keyframes nova-sync {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+/* ── Utility classes ──────────────────────────────────────────────────────── */
+
+.animate-spin {
+  animation: nova-spin 800ms linear infinite;
+  will-change: transform;
+}
+
+.animate-pulse {
+  animation: nova-pulse 2s ease-in-out infinite;
+  will-change: opacity;
+}
+
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.animate-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,0.04) 50%,
+    transparent 100%
+  );
+  animation: nova-shimmer 1.6s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-progress {
+  transform-origin: left center;
+  animation: nova-progress 0.4s ease-out forwards;
+  will-change: transform;
+}
+
+/* Status branch dot: toggled by Rust sync-pulse/sync-pulse-done events */
+#status-branch.syncing {
+  animation: nova-sync 300ms ease-in-out infinite;
+  will-change: opacity;
+}
+
+/* Scrollbar utilities */
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { scrollbar-width: none; }
